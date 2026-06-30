@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dora-Your Personal Friend</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="bg-layer"></div>
+
+<div class="shell">
+  <div class="main">
+
+    <div class="topbar">
+      <div class="topbar-title">
+        <div class="status-dot"></div>
+        Dora-Your Personal Friend
+      </div>
+      <div class="topbar-actions">
+        <div class="icon-btn" title="Clear chat" onclick="newChat()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-area" id="chat-area">
+      <div class="welcome-state" id="welcome-state">
+        <div class="welcome-icon">
+          <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 6C17 6 13 6 11 9C9.5 9.5 8 11 8 13C6.5 13.5 5 15 5 17C5 19 6.5 20.5 8 21C8 23 9.5 25 11 25.5C13 28 17 28 17 28" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M17 6C17 6 21 6 23 9C24.5 9.5 26 11 26 13C27.5 13.5 29 15 29 17C29 19 27.5 20.5 26 21C26 23 24.5 25 23 25.5C21 28 17 28 17 28" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="17" y1="6" x2="17" y2="28" stroke="white" stroke-width="1" stroke-dasharray="2 2" opacity="0.4"/>
+            <circle cx="17" cy="11" r="1.5" fill="white"/>
+            <circle cx="17" cy="17" r="2" fill="white"/>
+            <circle cx="17" cy="23" r="1.5" fill="white"/>
+            <line x1="17" y1="11" x2="11" y2="14" stroke="white" stroke-width="1" opacity="0.6"/>
+            <line x1="17" y1="17" x2="9" y2="17" stroke="white" stroke-width="1" opacity="0.6"/>
+            <line x1="17" y1="23" x2="11" y2="20" stroke="white" stroke-width="1" opacity="0.6"/>
+            <line x1="17" y1="11" x2="23" y2="14" stroke="white" stroke-width="1" opacity="0.6"/>
+            <line x1="17" y1="17" x2="25" y2="17" stroke="white" stroke-width="1" opacity="0.6"/>
+            <line x1="17" y1="23" x2="23" y2="20" stroke="white" stroke-width="1" opacity="0.6"/>
+            <circle cx="10" cy="14" r="1" fill="white" opacity="0.7"/>
+            <circle cx="8.5" cy="17" r="1" fill="white" opacity="0.7"/>
+            <circle cx="10" cy="20" r="1" fill="white" opacity="0.7"/>
+            <circle cx="24" cy="14" r="1" fill="white" opacity="0.7"/>
+            <circle cx="25.5" cy="17" r="1" fill="white" opacity="0.7"/>
+            <circle cx="24" cy="20" r="1" fill="white" opacity="0.7"/>
+          </svg>
+        </div>
+        <div class="welcome-heading">How can I help you today?</div>
+        <div class="welcome-sub">Ask anything — I can search the web for real-time information or answer from my knowledge.</div>
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <div class="input-wrapper">
+       
+        <textarea
+          id="chat-input"
+          rows="1"
+          placeholder="Ask anything…"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint">Dora may make mistakes. Verify important info.</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const messages = [];
+let isTyping = false;
+
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 140) + "px";
+}
+
+function handleKey(e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function scrollDown() {
+  const el = document.getElementById("chat-area");
+  el.scrollTop = el.scrollHeight;
+}
+
+function nowTime() {
+  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function escHtml(t) {
+  return t
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>");
+}
+
+function hideWelcome() {
+  const w = document.getElementById("welcome-state");
+  if (w) w.style.display = "none";
+}
+
+function setDisabled(val) {
+  document.getElementById("send-btn").disabled = val;
+  document.getElementById("chat-input").disabled = val;
+  isTyping = val;
+}
+
+function addBubble(text, role) {
+  hideWelcome();
+  const area   = document.getElementById("chat-area");
+  const isUser = role === "user";
+  const group  = document.createElement("div");
+  group.className = "message-group" + (isUser ? " user" : "");
+  group.innerHTML = `
+    <div class="msg-avatar ${isUser ? "user-av" : "bot"}">${isUser ? "U" : "ZG"}</div>
+    <div class="msg-content">
+      <div class="bubble ${isUser ? "user" : "bot"}">${escHtml(text)}</div>
+      <div class="msg-meta">${nowTime()}</div>
+    </div>`;
+  area.appendChild(group);
+  scrollDown();
+}
+
+function addTyping() {
+  hideWelcome();
+  const area = document.getElementById("chat-area");
+  const el   = document.createElement("div");
+  el.id = "typing-indicator";
+  el.className = "message-group";
+  el.innerHTML = `
+    <div class="msg-avatar bot">ZG</div>
+    <div class="msg-content">
+      <div class="bubble bot typing-bubble">
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>`;
+  area.appendChild(el);
+  scrollDown();
+}
+
+function removeEl(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+async function sendMessage() {
+  if (isTyping) return;
+  const inp  = document.getElementById("chat-input");
+  const text = inp.value.trim();
+  if (!text) return;
+
+  inp.value = "";
+  inp.style.height = "auto";
+  addBubble(text, "user");
+  messages.push({ role: "user", content: text });
+
+  setDisabled(true);
+  addTyping();
+
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages }),
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Server error"); }
+    const data = await res.json();
+    removeEl("typing-indicator");
+    addBubble(data.reply, "bot");
+    messages.push({ role: "assistant", content: data.reply });
+  } catch (err) {
+    removeEl("typing-indicator");
+    addBubble("⚠️ Error: " + err.message, "bot");
+  }
+
+  setDisabled(false);
+  document.getElementById("chat-input").focus();
+}
+
+function newChat() {
+  messages.length = 0;
+  document.getElementById("chat-input").value = "";
+  document.getElementById("chat-input").style.height = "auto";
+  document.getElementById("chat-area").innerHTML = `
+    <div class="welcome-state" id="welcome-state">
+      <div class="welcome-icon">
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17 6C17 6 13 6 11 9C9.5 9.5 8 11 8 13C6.5 13.5 5 15 5 17C5 19 6.5 20.5 8 21C8 23 9.5 25 11 25.5C13 28 17 28 17 28" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M17 6C17 6 21 6 23 9C24.5 9.5 26 11 26 13C27.5 13.5 29 15 29 17C29 19 27.5 20.5 26 21C26 23 24.5 25 23 25.5C21 28 17 28 17 28" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="17" y1="6" x2="17" y2="28" stroke="white" stroke-width="1" stroke-dasharray="2 2" opacity="0.4"/>
+          <circle cx="17" cy="11" r="1.5" fill="white"/>
+          <circle cx="17" cy="17" r="2" fill="white"/>
+          <circle cx="17" cy="23" r="1.5" fill="white"/>
+          <line x1="17" y1="11" x2="11" y2="14" stroke="white" stroke-width="1" opacity="0.6"/>
+          <line x1="17" y1="17" x2="9" y2="17" stroke="white" stroke-width="1" opacity="0.6"/>
+          <line x1="17" y1="23" x2="11" y2="20" stroke="white" stroke-width="1" opacity="0.6"/>
+          <line x1="17" y1="11" x2="23" y2="14" stroke="white" stroke-width="1" opacity="0.6"/>
+          <line x1="17" y1="17" x2="25" y2="17" stroke="white" stroke-width="1" opacity="0.6"/>
+          <line x1="17" y1="23" x2="23" y2="20" stroke="white" stroke-width="1" opacity="0.6"/>
+          <circle cx="10" cy="14" r="1" fill="white" opacity="0.7"/>
+          <circle cx="8.5" cy="17" r="1" fill="white" opacity="0.7"/>
+          <circle cx="10" cy="20" r="1" fill="white" opacity="0.7"/>
+          <circle cx="24" cy="14" r="1" fill="white" opacity="0.7"/>
+          <circle cx="25.5" cy="17" r="1" fill="white" opacity="0.7"/>
+          <circle cx="24" cy="20" r="1" fill="white" opacity="0.7"/>
+        </svg>
+      </div>
+      <div class="welcome-heading">How can I help you today?</div>
+      <div class="welcome-sub">Ask anything — I can search the web for real-time information or answer from my knowledge.</div>
+    </div>`;
+}
+
+document.getElementById("chat-input").focus();
+</script>
+</body>
+</html>
